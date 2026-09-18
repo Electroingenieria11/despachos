@@ -27,7 +27,7 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
@@ -81,7 +81,7 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* Navegación por pestañas */
+/* Pestañas */
 .tab-nav {
   display: flex;
   gap: 8px;
@@ -121,7 +121,7 @@ body {
   display: block;
 }
 
-/* Tarjetas y Cabeceras */
+/* Tarjetas */
 .card {
   background: var(--card-bg);
   border-radius: 8px;
@@ -148,7 +148,7 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-/* Botones de Exportación */
+/* Botones de acción */
 .export-actions {
   display: flex;
   gap: 8px;
@@ -181,10 +181,50 @@ body {
   background-color: var(--accent-red-hover);
 }
 
-/* Formulario */
+.btn-novedad {
+  background-color: #0284c7;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-novedad:hover {
+  background-color: #0369a1;
+}
+
+/* Insignias de estado (Badges) */
+.badge-estado {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.badge-entregado {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.badge-no-entregado {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+/* Formularios */
 .grid-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
 }
 
@@ -268,13 +308,12 @@ button:hover {
 }
 
 .btn-secundario {
-  background-color: #475569;
-  padding: 9px 16px;
-  font-size: 0.85rem;
+  background-color: #64748b;
+  padding: 10px 18px;
 }
 
 .btn-secundario:hover {
-  background-color: #334155;
+  background-color: #475569;
 }
 
 /* Cierre Diario */
@@ -377,32 +416,26 @@ tr:hover {
   padding: 24px;
 }
 
-/* =============================================================================
-   VENTANA MODAL FLOTANTE (NOVEDADES AL RETORNO)
-   ============================================================================= */
-
-/* Fondo oscurecido que cubre toda la pantalla */
+/* Modal Flotante */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.65); /* Fondo oscuro translúcido */
-  backdrop-filter: blur(3px); /* Desenfoque sutil de fondo */
-  display: none; /* Oculto por defecto */
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(3px);
+  display: none;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Por encima de cualquier tabla o encabezado */
+  z-index: 9999;
   padding: 20px;
 }
 
-/* Estado activo: se muestra centrado */
 .modal-overlay.active {
   display: flex;
 }
 
-/* Tarjeta contenedora blanca */
 .modal-container {
   background-color: #ffffff;
   border-radius: 10px;
@@ -426,7 +459,6 @@ tr:hover {
   }
 }
 
-/* Cabecera del modal */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -442,7 +474,6 @@ tr:hover {
   margin: 0;
 }
 
-/* Botón cerrar (X) transparente y limpio */
 .modal-header .btn-close {
   background: transparent;
   border: none;
@@ -460,7 +491,6 @@ tr:hover {
   background-color: #f1f5f9;
 }
 
-/* Recuadro con datos del viaje inicial */
 .info-despacho-box {
   background-color: #f8fafc;
   border: 1px solid var(--border-color);
@@ -468,7 +498,7 @@ tr:hover {
   border-radius: 6px;
   padding: 12px 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 12px;
   font-size: 0.85rem;
 }
@@ -490,7 +520,6 @@ tr:hover {
   color: var(--primary);
 }
 
-/* Botones de acción inferiores */
 .modal-actions {
   display: flex;
   justify-content: flex-end;

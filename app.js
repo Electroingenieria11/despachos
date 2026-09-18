@@ -10,12 +10,15 @@ let clienteSupabase = null;
 let listaViajes = [];
 let viajeEnEdicion = null; // Guarda el viaje seleccionado en memoria
 
+// =============================================================================
+// 2. MATRIZ DE TARIFAS ($400 Y $600 POR KILO EXTRA)
+// =============================================================================
 const TARIFARIO = {
   // Urbanos y Locales
   "URBANO": { base: 30000, extraPorKilo: 0, limiteKg: 1000 },
   "RURAL": { base: 50000, extraPorKilo: 0, limiteKg: 1000 },
 
-  // Norte y Valle ($400 el kilo adicional)
+  // Norte y Valle ($400/kg extra)
   "ANDALUCIA": { base: 50000, extraPorKilo: 400, limiteKg: 1000 },
   "BUGALAGRANDE": { base: 50000, extraPorKilo: 400, limiteKg: 1000 },
   "CAMP. LA LUISA": { base: 50000, extraPorKilo: 400, limiteKg: 1000 },
@@ -34,7 +37,7 @@ const TARIFARIO = {
   "CARTAGO": { base: 240000, extraPorKilo: 400, limiteKg: 1000 },
   "CAICEDONIA": { base: 260000, extraPorKilo: 400, limiteKg: 1000 },
 
-  // Occidente ($400 el kilo adicional)
+  // Occidente ($400/kg extra)
   "TRUJILLO": { base: 120000, extraPorKilo: 400, limiteKg: 1000 },
   "SALONICA": { base: 120000, extraPorKilo: 400, limiteKg: 1000 },
   "MEDIA CANOA": { base: 120000, extraPorKilo: 400, limiteKg: 1000 },
@@ -45,7 +48,7 @@ const TARIFARIO = {
   "CALIMA": { base: 180000, extraPorKilo: 400, limiteKg: 1000 },
   "RESTREPO": { base: 180000, extraPorKilo: 400, limiteKg: 1000 },
 
-  // Sur ($400 el kilo adicional)
+  // Sur ($400/kg extra)
   "ING. SAN CARLOS": { base: 70000, extraPorKilo: 400, limiteKg: 1000 },
   "SAN PEDRO": { base: 60000, extraPorKilo: 400, limiteKg: 1000 },
   "SAN JOSE": { base: 60000, extraPorKilo: 400, limiteKg: 1000 },
@@ -66,7 +69,7 @@ const TARIFARIO = {
   "FLORIDA": { base: 350000, extraPorKilo: 400, limiteKg: 1000 },
   "ING. MAYAGUEZ": { base: 350000, extraPorKilo: 400, limiteKg: 1000 },
 
-  // Nacionales / Eje Cafetero ($600 el kilo adicional)
+  // Nacionales / Eje Cafetero ($600/kg extra)
   "ARMENIA": { base: 400000, extraPorKilo: 600, limiteKg: 1000 },
   "PUEBLO TAPADO": { base: 350000, extraPorKilo: 600, limiteKg: 1000 },
   "MONTENEGRO": { base: 350000, extraPorKilo: 600, limiteKg: 1000 },
@@ -183,7 +186,13 @@ async function conectarSupabase() {
 async function guardarDespacho(evento) {
   evento.preventDefault();
 
+  const sucursal = document.getElementById("sucursal").value;
   const ciudad = document.getElementById("ciudad").value;
+
+  if (!sucursal) {
+    alert("Por favor selecciona una sucursal.");
+    return;
+  }
   if (!ciudad) {
     alert("Por favor selecciona una ciudad de destino.");
     return;
@@ -197,7 +206,9 @@ async function guardarDespacho(evento) {
   const nuevoRegistro = {
     fecha: document.getElementById("fecha").value,
     numero_factura: document.getElementById("factura").value.trim() || "S/F",
+    sucursal: sucursal,
     ciudad_destino: ciudad,
+    estado_entrega: "ENTREGADO",
     peso_kg: peso,
     tarifa_base: tarifaBase,
     kilos_extra: kilosExtra,
@@ -247,7 +258,7 @@ function limpiarFormulario() {
 }
 
 // =============================================================================
-// 6. MODAL DE NOVEDADES AL RETORNO (DESVÍOS Y DESCARGUE)
+// 6. MODAL DE NOVEDADES AL RETORNO (DESVÍOS, DESCARGUE Y ESTADO)
 // =============================================================================
 function abrirModalNovedades(id) {
   viajeEnEdicion = listaViajes.find(v => String(v.id) === String(id));
@@ -258,12 +269,14 @@ function abrirModalNovedades(id) {
 
   document.getElementById("editId").value = viajeEnEdicion.id;
   document.getElementById("infoFactura").textContent = viajeEnEdicion.numero_factura || viajeEnEdicion.numero_guia || "-";
+  document.getElementById("infoSucursal").textContent = viajeEnEdicion.sucursal || "D0604";
   document.getElementById("infoDestino").textContent = viajeEnEdicion.ciudad_destino;
   document.getElementById("infoPeso").textContent = `${Number(viajeEnEdicion.peso_kg).toLocaleString("es-CO")} kg`;
   
   const fleteInicial = Number(viajeEnEdicion.tarifa_base || 0) + Number(viajeEnEdicion.costo_kilos_extra || 0);
   document.getElementById("infoFleteInicial").textContent = formatoCOP.format(fleteInicial);
 
+  document.getElementById("editEstado").value = viajeEnEdicion.estado_entrega || "ENTREGADO";
   document.getElementById("editDesvio").value = viajeEnEdicion.costo_desvio || 0;
   document.getElementById("editDescargue").value = viajeEnEdicion.costo_descargue || 0;
   document.getElementById("editObservaciones").value = viajeEnEdicion.observaciones || "";
@@ -282,6 +295,7 @@ async function guardarNovedadesRetorno(evento) {
   if (!viajeEnEdicion) return;
 
   const id = document.getElementById("editId").value;
+  const nuevoEstado = document.getElementById("editEstado").value;
   const nuevoDesvio = parseFloat(document.getElementById("editDesvio").value) || 0;
   const nuevoDescargue = parseFloat(document.getElementById("editDescargue").value) || 0;
   const nuevasObservaciones = document.getElementById("editObservaciones").value.trim();
@@ -290,6 +304,7 @@ async function guardarNovedadesRetorno(evento) {
   const nuevoTotal = fleteInicial + nuevoDesvio + nuevoDescargue;
 
   const datosActualizados = {
+    estado_entrega: nuevoEstado,
     costo_desvio: nuevoDesvio,
     costo_descargue: nuevoDescargue,
     total_viaje: nuevoTotal,
@@ -312,7 +327,7 @@ async function guardarNovedadesRetorno(evento) {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        throw new Error("Supabase bloqueó la actualización. Recuerda ejecutar el script SQL con la política UPDATE.");
+        throw new Error("Supabase bloqueó la actualización. Asegúrate de tener activa la política UPDATE.");
       }
 
       const index = listaViajes.findIndex(v => String(v.id) === String(id));
@@ -320,7 +335,7 @@ async function guardarNovedadesRetorno(evento) {
         listaViajes[index] = { ...listaViajes[index], ...datosActualizados };
       }
 
-      alert("¡Novedades guardadas y flete actualizado con éxito!");
+      alert("¡Novedades guardadas con éxito!");
       cerrarModalNovedades();
       await cargarHistorial();
       renderizarTodo();
@@ -343,7 +358,7 @@ async function guardarNovedadesRetorno(evento) {
 }
 
 // =============================================================================
-// 7. HISTORIAL Y TABLAS
+// 7. HISTORIAL Y TABLAS (NO SUMA MONTOS CUANDO ES 'NO ENTREGADO')
 // =============================================================================
 async function cargarHistorial() {
   if (!clienteDB) return;
@@ -386,22 +401,31 @@ function renderizarTablaGeneral() {
   let acumuladoTotal = 0;
 
   if (filtrados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="td-empty">No hay despachos registrados para este filtro.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="td-empty">No hay despachos registrados para este filtro.</td></tr>`;
   } else {
     filtrados.forEach(v => {
-      acumuladoTotal += Number(v.total_viaje || 0);
       const adicionales = Number(v.costo_descargue || 0) + Number(v.costo_desvio || 0);
+      const esEntregado = (v.estado_entrega || "ENTREGADO") === "ENTREGADO";
+      const claseBadge = esEntregado ? "badge-entregado" : "badge-no-entregado";
+      const textoBadge = esEntregado ? "ENTREGADO" : "NO ENTREGADO";
+
+      // REGLA: Si NO fue entregado, NO suma al acumulado monetario
+      if (esEntregado) {
+        acumuladoTotal += Number(v.total_viaje || 0);
+      }
 
       const fila = document.createElement("tr");
       fila.innerHTML = `
         <td>${v.fecha}</td>
         <td><strong>${v.numero_factura || v.numero_guia || "-"}</strong></td>
+        <td><span style="font-weight: 600; color: var(--primary);">${v.sucursal || "D0604"}</span></td>
         <td>${v.ciudad_destino}</td>
+        <td style="text-align: center;"><span class="badge-estado ${claseBadge}">${textoBadge}</span></td>
         <td class="col-num">${Number(v.peso_kg).toLocaleString("es-CO")} kg</td>
         <td class="col-num">${formatoCOP.format(v.tarifa_base)}</td>
         <td class="col-num">${Number(v.kilos_extra).toLocaleString("es-CO")} kg (${formatoCOP.format(v.costo_kilos_extra)})</td>
         <td class="col-num">${formatoCOP.format(adicionales)}</td>
-        <td class="col-num" style="font-weight: 700; color: var(--primary);">${formatoCOP.format(v.total_viaje)}</td>
+        <td class="col-num" style="font-weight: 700; color: ${esEntregado ? 'var(--primary)' : 'var(--text-muted)'};">${formatoCOP.format(v.total_viaje)}</td>
         <td>${v.observaciones || "-"}</td>
         <td style="text-align: center;">
           <button type="button" class="btn-novedad" onclick="abrirModalNovedades('${v.id}')">Cerrar / Novedad</button>
@@ -439,22 +463,31 @@ function renderizarCierreDiario() {
   let totalDineroDia = 0;
 
   if (viajesDelDia.length === 0) {
-    tbodyDia.innerHTML = `<tr><td colspan="10" class="td-empty">No se registraron viajes en la fecha: ${fechaSeleccionada || "No seleccionada"}</td></tr>`;
+    tbodyDia.innerHTML = `<tr><td colspan="12" class="td-empty">No se registraron viajes en la fecha: ${fechaSeleccionada || "No seleccionada"}</td></tr>`;
   } else {
     viajesDelDia.forEach(v => {
-      totalDineroDia += Number(v.total_viaje || 0);
       const adicionales = Number(v.costo_descargue || 0) + Number(v.costo_desvio || 0);
+      const esEntregado = (v.estado_entrega || "ENTREGADO") === "ENTREGADO";
+      const claseBadge = esEntregado ? "badge-entregado" : "badge-no-entregado";
+      const textoBadge = esEntregado ? "ENTREGADO" : "NO ENTREGADO";
+
+      // REGLA: Si NO fue entregado, NO suma al total del día
+      if (esEntregado) {
+        totalDineroDia += Number(v.total_viaje || 0);
+      }
 
       const fila = document.createElement("tr");
       fila.innerHTML = `
         <td>${v.fecha}</td>
         <td><strong>${v.numero_factura || v.numero_guia || "-"}</strong></td>
+        <td><span style="font-weight: 600; color: var(--primary);">${v.sucursal || "D0604"}</span></td>
         <td>${v.ciudad_destino}</td>
+        <td style="text-align: center;"><span class="badge-estado ${claseBadge}">${textoBadge}</span></td>
         <td class="col-num">${Number(v.peso_kg).toLocaleString("es-CO")} kg</td>
         <td class="col-num">${formatoCOP.format(v.tarifa_base)}</td>
         <td class="col-num">${Number(v.kilos_extra).toLocaleString("es-CO")} kg (${formatoCOP.format(v.costo_kilos_extra)})</td>
         <td class="col-num">${formatoCOP.format(adicionales)}</td>
-        <td class="col-num" style="font-weight: 700; color: var(--accent-green);">${formatoCOP.format(v.total_viaje)}</td>
+        <td class="col-num" style="font-weight: 700; color: ${esEntregado ? 'var(--accent-green)' : 'var(--text-muted)'};">${formatoCOP.format(v.total_viaje)}</td>
         <td>${v.observaciones || "-"}</td>
         <td style="text-align: center;">
           <button type="button" class="btn-novedad" onclick="abrirModalNovedades('${v.id}')">Cerrar / Novedad</button>
@@ -464,6 +497,7 @@ function renderizarCierreDiario() {
     });
   }
 
+  // El conteo de viajes se mantiene (se realizaron físicamente), pero el dinero solo suma los entregados
   if (kpiViajes) kpiViajes.textContent = viajesDelDia.length;
   if (kpiTotal) kpiTotal.textContent = formatoCOP.format(totalDineroDia);
 }
@@ -480,7 +514,9 @@ function exportarAExcel(lista, nombreArchivo) {
   const datosExcel = lista.map(item => ({
     "Fecha": item.fecha,
     "N° Factura": item.numero_factura || item.numero_guia || "S/F",
+    "Sucursal": item.sucursal || "D0604",
     "Destino": item.ciudad_destino,
+    "Estado Entrega": item.estado_entrega || "ENTREGADO",
     "Peso (Kg)": Number(item.peso_kg),
     "Tarifa Base (COP)": Number(item.tarifa_base),
     "Kilos Extra": Number(item.kilos_extra),
@@ -514,14 +550,20 @@ function exportarAPDF(lista, titulo, nombreArchivo) {
   doc.setTextColor(100, 116, 139);
   doc.text(`Fecha de exportación: ${new Date().toLocaleDateString("es-CO")}`, 40, 56);
 
-  let sumaTotal = 0;
+  let sumaTotalEntregados = 0;
   const filas = lista.map(item => {
-    sumaTotal += Number(item.total_viaje || 0);
+    const esEntregado = (item.estado_entrega || "ENTREGADO") === "ENTREGADO";
+    if (esEntregado) {
+      sumaTotalEntregados += Number(item.total_viaje || 0);
+    }
+
     const extras = Number(item.costo_descargue || 0) + Number(item.costo_desvio || 0);
     return [
       item.fecha,
       item.numero_factura || item.numero_guia || "-",
+      item.sucursal || "D0604",
       item.ciudad_destino,
+      item.estado_entrega || "ENTREGADO",
       `${Number(item.peso_kg).toLocaleString("es-CO")} kg`,
       formatoCOP.format(item.tarifa_base),
       `${Number(item.kilos_extra).toLocaleString("es-CO")} kg`,
@@ -532,13 +574,13 @@ function exportarAPDF(lista, titulo, nombreArchivo) {
   });
 
   doc.autoTable({
-    head: [["Fecha", "N° Factura", "Destino", "Peso", "Tarifa Base", "Kilos Extra", "Extras", "Total", "Observaciones"]],
+    head: [["Fecha", "N° Factura", "Sucursal", "Destino", "Estado", "Peso", "Base", "Extra", "Extras", "Total", "Observaciones"]],
     body: filas,
     startY: 70,
     theme: "striped",
     headStyles: { fillColor: [30, 58, 138], textColor: 255 },
-    styles: { fontSize: 8, cellPadding: 4 },
-    foot: [["", "", "", "", "", "", "TOTAL ACUMULADO:", formatoCOP.format(sumaTotal), ""]],
+    styles: { fontSize: 8, cellPadding: 3 },
+    foot: [["", "", "", "", "", "", "", "", "TOTAL ENTREGADOS:", formatoCOP.format(sumaTotalEntregados), ""]],
     footStyles: { fillColor: [241, 245, 249], textColor: [21, 128, 61], fontStyle: "bold" }
   });
 
